@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartGuesser - Guess the Startup</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="screen active">
+        <div class="welcome-container">
+            <div class="logo">
+                <div class="logo-icon">✦</div>
+                <h1>StartGuesser</h1>
+            </div>
+            <p class="tagline">Can you identify startups just from their landing pages?</p>
+            <p class="description">You'll see 10 startup landing pages with names blurred out. Guess the startup, earn points, and build your streak!</p>
+            <div class="rules">
+                <div class="rule"><span class="rule-icon">🎯</span> +200 pts for correct guess</div>
+                <div class="rule"><span class="rule-icon">🔥</span> Streak bonus: +50 pts per streak</div>
+                <div class="rule"><span class="rule-icon">💡</span> Hints cost -50 pts</div>
+                <div class="rule"><span class="rule-icon">⏱️</span> 60 seconds per round</div>
+            </div>
+            <button id="start-btn" class="btn-start">Start Guessing</button>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+        <header class="game-header">
+            <div class="header-left">
+                <div class="logo-small">
+                    <div class="logo-icon-small">✦</div>
+                    <span>StartGuesser</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="badge badge-score">SCORE <strong id="score-display">0</strong></div>
+                <div class="badge badge-streak">STREAK <strong id="streak-display">0</strong></div>
+                <div class="badge badge-time">TIME <strong id="timer-display">1:00</strong></div>
+            </div>
+        </header>
+
+        <div class="round-indicator">Round <span id="round-display">1</span> / 10</div>
+
+        <div class="browser-frame">
+            <div class="browser-bar">
+                <div class="browser-dots">
+                    <span class="dot red"></span>
+                    <span class="dot yellow"></span>
+                    <span class="dot green"></span>
+                </div>
+                <div class="browser-url" id="browser-url">
+                    <span class="url-text">████████.com</span>
+                </div>
+            </div>
+            <div class="browser-content" id="landing-page-container">
+                <!-- Landing page content injected here -->
+            </div>
+        </div>
+
+        <div class="hint-row">
+            <button id="hint-btn" class="hint-btn">Need a hint? (-50pts)</button>
+            <div id="hint-text" class="hint-text"></div>
+        </div>
+
+        <div class="guess-row">
+            <div class="input-wrapper">
+                <input type="text" id="guess-input" placeholder="Type startup name..." autocomplete="off">
+                <div id="suggestions" class="suggestions"></div>
+            </div>
+            <button id="guess-btn" class="btn-guess">Guess</button>
+        </div>
+
+        <!-- Feedback overlay -->
+        <div id="feedback-overlay" class="feedback-overlay">
+            <div id="feedback-content" class="feedback-content">
+                <div id="feedback-icon" class="feedback-icon"></div>
+                <h2 id="feedback-title"></h2>
+                <p id="feedback-detail"></p>
+                <button id="next-btn" class="btn-next">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Screen -->
+    <div id="results-screen" class="screen">
+        <div class="results-container">
+            <div class="logo">
+                <div class="logo-icon">✦</div>
+                <h1>StartGuesser</h1>
+            </div>
+            <h2 class="results-title" id="results-title">Game Over!</h2>
+            <div class="final-score">
+                <span class="final-score-label">Final Score</span>
+                <span class="final-score-value" id="final-score">0</span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="correct-count">0</div>
+                    <div class="stat-label">Correct</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="best-streak">0</div>
+                    <div class="stat-label">Best Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="hints-used">0</div>
+                    <div class="stat-label">Hints Used</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avg-time">0s</div>
+                    <div class="stat-label">Avg Time</div>
+                </div>
+            </div>
+            <div class="results-breakdown" id="results-breakdown">
+                <!-- Breakdown items injected -->
+            </div>
+            <button id="play-again-btn" class="btn-start">Play Again</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
