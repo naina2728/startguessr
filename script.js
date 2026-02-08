@@ -733,6 +733,58 @@ const STARTUPS = [
 const ALL_STARTUP_NAMES = STARTUPS.map(s => s.name);
 
 // ==========================================
+// Roast / Hype Messages
+// ==========================================
+const ROASTS_CORRECT = [
+    "Their marketing team would be proud of you",
+    "Living rent-free in your brain",
+    "You scroll too much... but nice",
+    "Brand recognition: immaculate",
+    "Their Series A was worth it apparently",
+    "Tell me you're chronically online without telling me",
+    "You've definitely signed up for their newsletter",
+    "Their brand designer just shed a tear of joy",
+    "Main character energy right there",
+    "You probably have their stickers on your laptop",
+    "That was embarrassingly fast... respect",
+    "Their growth team wants to hire you",
+    "You ARE the target demographic",
+    "VP of Marketing just got a raise because of you"
+];
+
+const ROASTS_WRONG = [
+    "Their entire marketing budget... wasted on you",
+    "They spent millions on branding for THIS?",
+    "Brand awareness? Never heard of her",
+    "That startup's CEO is crying right now",
+    "You just proved their brand needs more work",
+    "The VC who funded them wants a refund",
+    "Rebrand incoming because of this answer",
+    "Their designer just rage-quit",
+    "Delete your LinkedIn at this point",
+    "You've clearly never been on Product Hunt",
+    "Touch grass AND the internet please",
+    "That's... not even close bestie"
+];
+
+const ROASTS_TIMEOUT = [
+    "You had 60 seconds and chose chaos",
+    "Their homepage was RIGHT THERE",
+    "The loading spinner had more purpose than this round",
+    "Even their 404 page is more recognizable",
+    "60 seconds of staring... into the void",
+    "This is why they need to rebrand tbh",
+    "You gave up faster than their first pivot",
+    "The hourglass ran out of patience with you",
+    "Not even a guess? Bold strategy."
+];
+
+function getRandomRoast(type) {
+    const arr = type === 'correct' ? ROASTS_CORRECT : type === 'wrong' ? ROASTS_WRONG : ROASTS_TIMEOUT;
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ==========================================
 // Game State
 // ==========================================
 let state = {
@@ -743,12 +795,13 @@ let state = {
     bestStreak: 0,
     hintsUsed: 0,
     hintUsedThisRound: false,
+    confidenceLevel: 'medium',
     timeLeft: 60,
     timerInterval: null,
     roundStartTimes: [],
     roundEndTimes: [],
-    results: [],       // { startup, guess, correct, hintUsed, timeTaken }
-    gameStartups: [],   // 10 shuffled startups for this game
+    results: [],
+    gameStartups: [],
     selectedSuggestion: -1
 };
 
@@ -767,6 +820,7 @@ const streakDisplay = $('streak-display');
 const timerDisplay = $('timer-display');
 const roundDisplay = $('round-display');
 const browserUrl = $('browser-url');
+const browserFrame = $('browser-frame');
 const landingContainer = $('landing-page-container');
 const hintBtn = $('hint-btn');
 const hintText = $('hint-text');
@@ -776,9 +830,15 @@ const suggestionsEl = $('suggestions');
 const feedbackOverlay = $('feedback-overlay');
 const feedbackIcon = $('feedback-icon');
 const feedbackTitle = $('feedback-title');
+const feedbackRoast = $('feedback-roast');
 const feedbackDetail = $('feedback-detail');
 const nextBtn = $('next-btn');
 const playAgainBtn = $('play-again-btn');
+const shareBtn = $('share-btn');
+const confettiContainer = $('confetti-container');
+
+// Confidence buttons
+const confBtns = document.querySelectorAll('.confidence-btn');
 
 // ==========================================
 // Utility
@@ -806,6 +866,69 @@ function switchScreen(name) {
     state.currentScreen = name;
 }
 
+function getConfidenceMultiplier() {
+    if (state.confidenceLevel === 'low') return 1;
+    if (state.confidenceLevel === 'medium') return 1.5;
+    return 2;
+}
+
+function getConfidencePenalty() {
+    if (state.confidenceLevel === 'high') return 100;
+    if (state.confidenceLevel === 'medium') return 25;
+    return 0;
+}
+
+// ==========================================
+// Confetti
+// ==========================================
+function fireConfetti() {
+    const colors = ['#00e87b', '#ff4444', '#d4a800', '#ff69b4', '#4353ff', '#00c4cc', '#f22f46', '#635bff'];
+    const shapes = ['circle', 'square', 'triangle'];
+
+    for (let i = 0; i < 60; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const shape = shapes[Math.floor(Math.random() * shapes.length)];
+        const size = Math.random() * 8 + 6;
+        const left = Math.random() * 100;
+        const delay = Math.random() * 0.8;
+        const drift = (Math.random() - 0.5) * 200;
+
+        piece.style.left = `${left}%`;
+        piece.style.width = `${size}px`;
+        piece.style.height = `${size}px`;
+        piece.style.backgroundColor = color;
+        piece.style.animationDelay = `${delay}s`;
+        piece.style.animationDuration = `${1.5 + Math.random() * 1.5}s`;
+        piece.style.setProperty('--drift', `${drift}px`);
+
+        if (shape === 'circle') piece.style.borderRadius = '50%';
+        else if (shape === 'triangle') {
+            piece.style.width = '0';
+            piece.style.height = '0';
+            piece.style.backgroundColor = 'transparent';
+            piece.style.borderLeft = `${size/2}px solid transparent`;
+            piece.style.borderRight = `${size/2}px solid transparent`;
+            piece.style.borderBottom = `${size}px solid ${color}`;
+        }
+
+        confettiContainer.appendChild(piece);
+    }
+
+    setTimeout(() => {
+        confettiContainer.innerHTML = '';
+    }, 3000);
+}
+
+// ==========================================
+// Shake Browser Frame
+// ==========================================
+function shakeBrowserFrame() {
+    browserFrame.classList.add('shake-wrong');
+    setTimeout(() => browserFrame.classList.remove('shake-wrong'), 500);
+}
+
 // ==========================================
 // Game Logic
 // ==========================================
@@ -815,10 +938,15 @@ function startGame() {
     state.streak = 0;
     state.bestStreak = 0;
     state.hintsUsed = 0;
+    state.confidenceLevel = 'medium';
     state.results = [];
     state.roundStartTimes = [];
     state.roundEndTimes = [];
     state.gameStartups = shuffle(STARTUPS).slice(0, 10);
+
+    // Reset confidence buttons
+    confBtns.forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-level="medium"]').classList.add('active');
 
     updateScoreboard();
     switchScreen('game');
@@ -884,26 +1012,34 @@ function handleGuess() {
                       startup.name.toLowerCase() === guess.toLowerCase();
 
     const timeTaken = Math.round((state.roundEndTimes[state.currentRound] - state.roundStartTimes[state.currentRound]) / 1000);
+    const multiplier = getConfidenceMultiplier();
+    const penalty = getConfidencePenalty();
 
     if (isCorrect) {
         const basePoints = 200;
         const streakBonus = state.streak * 50;
         const hintPenalty = state.hintUsedThisRound ? 50 : 0;
         const timeBonus = Math.max(0, Math.floor(state.timeLeft / 2) * 5);
-        const pointsEarned = basePoints + streakBonus + timeBonus - hintPenalty;
+        const rawPoints = basePoints + streakBonus + timeBonus - hintPenalty;
+        const pointsEarned = Math.round(rawPoints * multiplier);
 
         state.score += pointsEarned;
         state.streak++;
         if (state.streak > state.bestStreak) state.bestStreak = state.streak;
 
-        state.results.push({ startup: startup.name, guess, correct: true, hintUsed: state.hintUsedThisRound, timeTaken });
+        state.results.push({ startup: startup.name, guess, correct: true, hintUsed: state.hintUsedThisRound, timeTaken, confidence: state.confidenceLevel });
 
-        showFeedback('correct', startup.name, `+${pointsEarned} pts (${streakBonus > 0 ? `streak +${streakBonus}, ` : ''}${timeBonus > 0 ? `speed +${timeBonus}` : 'no speed bonus'}${hintPenalty > 0 ? `, hint -${hintPenalty}` : ''})`);
+        const multLabel = multiplier > 1 ? ` (${multiplier}x confidence!)` : '';
+        showFeedback('correct', startup.name, `+${pointsEarned} pts${multLabel}`);
+        fireConfetti();
     } else {
+        state.score = Math.max(0, state.score - penalty);
         state.streak = 0;
-        state.results.push({ startup: startup.name, guess, correct: false, hintUsed: state.hintUsedThisRound, timeTaken });
+        state.results.push({ startup: startup.name, guess, correct: false, hintUsed: state.hintUsedThisRound, timeTaken, confidence: state.confidenceLevel });
 
-        showFeedback('wrong', startup.name, `You guessed "${guess}"`);
+        const penaltyLabel = penalty > 0 ? ` (-${penalty} pts for ${state.confidenceLevel} confidence)` : '';
+        showFeedback('wrong', startup.name, `You guessed "${guess}"${penaltyLabel}`);
+        shakeBrowserFrame();
     }
 
     updateScoreboard();
@@ -914,15 +1050,20 @@ function handleTimeout() {
     state.roundEndTimes[state.currentRound] = Date.now();
 
     const startup = state.gameStartups[state.currentRound];
+    const penalty = getConfidencePenalty();
+    state.score = Math.max(0, state.score - penalty);
     state.streak = 0;
-    state.results.push({ startup: startup.name, guess: '', correct: false, hintUsed: state.hintUsedThisRound, timeTaken: 60 });
+    state.results.push({ startup: startup.name, guess: '', correct: false, hintUsed: state.hintUsedThisRound, timeTaken: 60, confidence: state.confidenceLevel });
 
-    showFeedback('timeout', startup.name, "Time's up!");
+    const penaltyLabel = penalty > 0 ? ` (-${penalty} pts)` : '';
+    showFeedback('timeout', startup.name, `Time's up!${penaltyLabel}`);
     updateScoreboard();
+    shakeBrowserFrame();
 }
 
 function showFeedback(type, startupName, detail) {
     feedbackOverlay.classList.add('active');
+    const roast = getRandomRoast(type);
 
     if (type === 'correct') {
         feedbackIcon.textContent = '✅';
@@ -941,6 +1082,7 @@ function showFeedback(type, startupName, detail) {
         feedbackTitle.className = 'timeout-text';
     }
 
+    feedbackRoast.textContent = roast;
     feedbackDetail.textContent = detail;
     nextBtn.textContent = state.currentRound < 9 ? 'Next' : 'See Results';
 }
@@ -971,6 +1113,17 @@ function updateScoreboard() {
     scoreDisplay.textContent = state.score.toLocaleString();
     streakDisplay.textContent = state.streak;
 }
+
+// ==========================================
+// Confidence Selection
+// ==========================================
+confBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        confBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.confidenceLevel = btn.dataset.level;
+    });
+});
 
 // ==========================================
 // Autocomplete
@@ -1036,14 +1189,15 @@ function showResults() {
     const totalTime = state.results.reduce((sum, r) => sum + r.timeTaken, 0);
     const avgTime = Math.round(totalTime / state.results.length);
 
-    // Title
+    // Fun roast titles
     const titles = [
-        { min: 0, text: "Better luck next time!" },
-        { min: 3, text: "Not bad!" },
-        { min: 5, text: "Good job!" },
-        { min: 7, text: "Impressive!" },
-        { min: 9, text: "Startup Expert!" },
-        { min: 10, text: "Perfect Score! 🏆" }
+        { min: 0, text: "Do you even internet? 💀" },
+        { min: 1, text: "Their marketing budgets are WASTED on you 😭" },
+        { min: 3, text: "Your brand awareness needs CPR 🏥" },
+        { min: 5, text: "Mid. Just mid. 😐" },
+        { min: 7, text: "Okay brand detective 🕵️" },
+        { min: 9, text: "Your screen time is showing 📱" },
+        { min: 10, text: "You ARE the target audience 🎯" }
     ];
     const title = [...titles].reverse().find(t => correctCount >= t.min).text;
 
@@ -1053,6 +1207,10 @@ function showResults() {
     $('best-streak').textContent = state.bestStreak;
     $('hints-used').textContent = state.hintsUsed;
     $('avg-time').textContent = `${avgTime}s`;
+
+    // Reset share button
+    shareBtn.textContent = '📋 Share My Score';
+    shareBtn.classList.remove('copied');
 
     // Breakdown
     const breakdownEl = $('results-breakdown');
@@ -1069,6 +1227,38 @@ function showResults() {
             </div>
         `;
     }).join('');
+
+    // Confetti for good scores
+    if (correctCount >= 7) fireConfetti();
+}
+
+// ==========================================
+// Share Score
+// ==========================================
+function shareScore() {
+    const correctCount = state.results.filter(r => r.correct).length;
+    const resultEmojis = state.results.map(r => r.correct ? '🟢' : '🔴').join('');
+
+    const text = `I scored ${correctCount}/10 on "Is My Brand Strong?" 👁️
+
+${resultEmojis}
+
+Think you know startups better? Try it: ${window.location.href}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        shareBtn.textContent = '✅ Copied!';
+        shareBtn.classList.add('copied');
+        setTimeout(() => {
+            shareBtn.textContent = '📋 Share My Score';
+            shareBtn.classList.remove('copied');
+        }, 2500);
+    }).catch(() => {
+        // Fallback
+        shareBtn.textContent = '❌ Copy failed';
+        setTimeout(() => {
+            shareBtn.textContent = '📋 Share My Score';
+        }, 2000);
+    });
 }
 
 // ==========================================
@@ -1079,6 +1269,7 @@ playAgainBtn.addEventListener('click', startGame);
 guessBtn.addEventListener('click', handleGuess);
 hintBtn.addEventListener('click', useHint);
 nextBtn.addEventListener('click', advanceRound);
+shareBtn.addEventListener('click', shareScore);
 
 guessInput.addEventListener('input', updateSuggestions);
 guessInput.addEventListener('keydown', (e) => {

@@ -3,28 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StartGuesser - Guess the Startup</title>
+    <title>Is My Brand Strong?</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
+    <!-- Confetti container -->
+    <div id="confetti-container" class="confetti-container"></div>
+
     <!-- Welcome Screen -->
     <div id="welcome-screen" class="screen active">
         <div class="welcome-container">
             <div class="logo">
-                <div class="logo-icon">✦</div>
-                <h1>StartGuesser</h1>
+                <div class="logo-icon">👁️</div>
+                <h1>Is My Brand Strong?</h1>
             </div>
-            <p class="tagline">Can you identify startups just from their landing pages?</p>
-            <p class="description">You'll see 10 startup landing pages with names blurred out. Guess the startup, earn points, and build your streak!</p>
+            <p class="tagline">How well do you really know the brands you use every day?</p>
+            <p class="description">We'll show you 10 startup landing pages with names blurred out. Guess the brand, bet your confidence, and find out if their branding actually works.</p>
             <div class="rules">
                 <div class="rule"><span class="rule-icon">🎯</span> +200 pts for correct guess</div>
-                <div class="rule"><span class="rule-icon">🔥</span> Streak bonus: +50 pts per streak</div>
-                <div class="rule"><span class="rule-icon">💡</span> Hints cost -50 pts</div>
+                <div class="rule"><span class="rule-icon">🎰</span> Bet your confidence: 1x, 1.5x, or 2x multiplier</div>
+                <div class="rule"><span class="rule-icon">💀</span> Wrong on high confidence? Lose 100 pts</div>
                 <div class="rule"><span class="rule-icon">⏱️</span> 60 seconds per round</div>
             </div>
-            <button id="start-btn" class="btn-start">Start Guessing</button>
+            <button id="start-btn" class="btn-start">Test My Eye</button>
         </div>
     </div>
 
@@ -33,8 +36,8 @@
         <header class="game-header">
             <div class="header-left">
                 <div class="logo-small">
-                    <div class="logo-icon-small">✦</div>
-                    <span>StartGuesser</span>
+                    <div class="logo-icon-small">👁️</div>
+                    <span>Is My Brand Strong?</span>
                 </div>
             </div>
             <div class="header-right">
@@ -46,7 +49,7 @@
 
         <div class="round-indicator">Round <span id="round-display">1</span> / 10</div>
 
-        <div class="browser-frame">
+        <div class="browser-frame" id="browser-frame">
             <div class="browser-bar">
                 <div class="browser-dots">
                     <span class="dot red"></span>
@@ -67,6 +70,28 @@
             <div id="hint-text" class="hint-text"></div>
         </div>
 
+        <!-- Confidence Meter -->
+        <div class="confidence-row" id="confidence-row">
+            <span class="confidence-label">How confident are you?</span>
+            <div class="confidence-buttons">
+                <button class="confidence-btn" data-level="low" id="conf-low">
+                    <span class="conf-emoji">😰</span>
+                    <span class="conf-text">Low</span>
+                    <span class="conf-mult">1x</span>
+                </button>
+                <button class="confidence-btn" data-level="medium" id="conf-medium">
+                    <span class="conf-emoji">🤔</span>
+                    <span class="conf-text">Medium</span>
+                    <span class="conf-mult">1.5x</span>
+                </button>
+                <button class="confidence-btn active" data-level="high" id="conf-high">
+                    <span class="conf-emoji">😎</span>
+                    <span class="conf-text">High</span>
+                    <span class="conf-mult">2x</span>
+                </button>
+            </div>
+        </div>
+
         <div class="guess-row">
             <div class="input-wrapper">
                 <input type="text" id="guess-input" placeholder="Type startup name..." autocomplete="off">
@@ -80,6 +105,7 @@
             <div id="feedback-content" class="feedback-content">
                 <div id="feedback-icon" class="feedback-icon"></div>
                 <h2 id="feedback-title"></h2>
+                <p id="feedback-roast" class="feedback-roast"></p>
                 <p id="feedback-detail"></p>
                 <button id="next-btn" class="btn-next">Next</button>
             </div>
@@ -90,8 +116,8 @@
     <div id="results-screen" class="screen">
         <div class="results-container">
             <div class="logo">
-                <div class="logo-icon">✦</div>
-                <h1>StartGuesser</h1>
+                <div class="logo-icon">👁️</div>
+                <h1>Is My Brand Strong?</h1>
             </div>
             <h2 class="results-title" id="results-title">Game Over!</h2>
             <div class="final-score">
@@ -119,7 +145,10 @@
             <div class="results-breakdown" id="results-breakdown">
                 <!-- Breakdown items injected -->
             </div>
-            <button id="play-again-btn" class="btn-start">Play Again</button>
+            <div class="results-actions">
+                <button id="share-btn" class="btn-share">📋 Share My Score</button>
+                <button id="play-again-btn" class="btn-start">Try Again</button>
+            </div>
         </div>
     </div>
 
